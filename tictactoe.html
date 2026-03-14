@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tic Tac Toe — Play with Friends</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #060612;
+      --surface: #0d0d2b;
+      --border: #1e1e4a;
+      --x-color: #ff4d6d;
+      --o-color: #00e5ff;
+      --accent: #7b2fff;
+      --text: #e0e0ff;
+      --muted: #5a5a8a;
+      --glow-x: 0 0 20px #ff4d6d88;
+      --glow-o: 0 0 20px #00e5ff88;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Rajdhani', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      overflow-x: hidden;
+    }
+
+    /* Animated background grid */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(123,47,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(123,47,255,0.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container { position: relative; z-index: 1; width: 100%; max-width: 480px; }
+
+    h1 {
+      font-family: 'Orbitron', monospace;
+      font-size: clamp(1.4rem, 5vw, 2rem);
+      font-weight: 900;
+      text-align: center;
+      letter-spacing: 4px;
+      margin-bottom: 6px;
+      background: linear-gradient(135deg, var(--x-color), var(--accent), var(--o-color));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.85rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 32px;
+    }
+
+    /* Room Setup */
+    #room-area {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px;
+      text-align: center;
+    }
+
+    #room-area p {
+      color: var(--muted);
+      font-size: 1rem;
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    input {
+      flex: 1;
+      padding: 12px 16px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1rem;
+      letter-spacing: 1px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input:focus { border-color: var(--accent); }
+    input::placeholder { color: var(--muted); }
+
+    button {
+      padding: 12px 22px;
+      background: linear-gradient(135deg, var(--accent), #5500cc);
+      border: none;
+      border-radius: 10px;
+      color: white;
+      font-family: 'Orbitron', monospace;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+    button:hover { opacity: 0.85; transform: translateY(-1px); }
+    button:active { transform: translateY(0); }
+
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.9rem;
+      padding: 8px 16px;
+    }
+    .btn-secondary:hover { border-color: var(--muted); color: var(--text); }
+
+    /* Game area */
+    #game-area { display: none; }
+
+    .player-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-family: 'Orbitron', monospace;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      margin-bottom: 20px;
+    }
+    .badge-x { background: rgba(255,77,109,0.15); border: 1px solid var(--x-color); color: var(--x-color); }
+    .badge-o { background: rgba(0,229,255,0.15); border: 1px solid var(--o-color); color: var(--o-color); }
+
+    .status-bar {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 20px;
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 1px;
+      min-height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s;
+    }
+    .status-bar.your-turn { border-color: var(--accent); color: var(--text); }
+    .status-bar.win { border-color: gold; color: gold; }
+    .status-bar.waiting { color: var(--muted); }
+
+    /* Board */
+    #board {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .cell {
+      aspect-ratio: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      font-family: 'Orbitron', monospace;
+      font-size: clamp(2rem, 10vw, 3.5rem);
+      font-weight: 900;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s, border-color 0.15s, transform 0.1s;
+      position: relative;
+      overflow: hidden;
+    }
+    .cell:hover:not(.taken) { background: #12123a; border-color: var(--accent); transform: scale(1.02); }
+    .cell.taken { cursor: default; }
+    .cell.x { color: var(--x-color); border-color: #ff4d6d44; box-shadow: var(--glow-x); }
+    .cell.o { color: var(--o-color); border-color: #00e5ff44; box-shadow: var(--glow-o); }
+    .cell.winning { animation: pulse-win 0.6s ease infinite alternate; }
+    @keyframes pulse-win {
+      from { transform: scale(1); }
+      to { transform: scale(1.06); }
+    }
+
+    .cell-pop {
+      animation: pop 0.25s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    @keyframes pop {
+      from { transform: scale(0.4); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    .room-info {
+      text-align: center;
+      margin-top: 16px;
+      color: var(--muted);
+      font-size: 0.8rem;
+      letter-spacing: 1px;
+    }
+    .room-info span { color: var(--accent); font-family: 'Orbitron', monospace; }
+
+    /* Waiting overlay */
+    .waiting-dot {
+      display: inline-block;
+      width: 6px; height: 6px;
+      background: var(--muted);
+      border-radius: 50%;
+      margin: 0 2px;
+      animation: blink 1.2s ease infinite;
+    }
+    .waiting-dot:nth-child(2) { animation-delay: 0.2s; }
+    .waiting-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes blink { 0%,100%{opacity:0.2} 50%{opacity:1} }
+
+    @media (max-width: 400px) {
+      #room-area { padding: 20px; }
+      .input-row { flex-direction: column; }
+      button { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>TIC TAC TOE</h1>
+  <p class="subtitle">Multiplayer · Real-time</p>
+
+  <!-- Room Setup -->
+  <div id="room-area">
+    <p>Create a room and share the Room ID with your friend. Both of you enter the same ID to play!</p>
+    <div class="input-row">
+      <input id="roomInput" placeholder="Enter room ID e.g. ajay123" maxlength="20" />
+      <button onclick="joinRoom()">JOIN</button>
+    </div>
+  </div>
+
+  <!-- Game -->
+  <div id="game-area">
+    <div style="text-align:center">
+      <div id="playerBadge" class="player-badge badge-x">YOU ARE X</div>
+    </div>
+    <div id="statusBar" class="status-bar waiting">
+      Waiting for opponent
+      <span class="waiting-dot"></span><span class="waiting-dot"></span><span class="waiting-dot"></span>
+    </div>
+    <div id="board"></div>
+    <div class="actions">
+      <button onclick="resetGame()">↺ RESTART</button>
+      <button class="btn-secondary" onclick="leaveRoom()">Leave Room</button>
+    </div>
+    <div class="room-info">Room: <span id="roomLabel"></span></div>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, set, onValue, get }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCDQf-i8UH5wXc9Erz-clkrRi-byRbrwNE",
+    authDomain: "multip-35e38.firebaseapp.com",
+    databaseURL: "https://multip-35e38-default-rtdb.firebaseio.com",
+    projectId: "multip-35e38",
+    storageBucket: "multip-35e38.firebasestorage.app",
+    messagingSenderId: "641663267611",
+    appId: "1:641663267611:web:8c20f6b7a47657226e19be",
+    measurementId: "G-WNGQ5SKFQK"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  let mySymbol, roomId, gameRef, unsubscribe;
+
+  window.joinRoom = async function () {
+    roomId = document.getElementById("roomInput").value.trim().replace(/\s+/g, "-");
+    if (!roomId) return alert("Please enter a room ID!");
+    document.getElementById("room-area").style.display = "none";
+    document.getElementById("game-area").style.display = "block";
+    document.getElementById("roomLabel").textContent = roomId;
+
+    gameRef = ref(db, "rooms/" + roomId);
+    const snap = await get(gameRef);
+    const data = snap.val();
+
+    if (!data || !data.players || (!data.players.X && !data.players.O)) {
+      mySymbol = "X";
+      await set(gameRef, {
+        board: Array(9).fill(""),
+        turn: "X",
+        players: { X: true, O: false },
+        winner: ""
+      });
+    } else if (data.players.X && !data.players.O) {
+      mySymbol = "O";
+      await set(ref(db, "rooms/" + roomId + "/players/O"), true);
+    } else {
+      mySymbol = "X"; // spectator joins as X for simplicity
+    }
+
+    const badge = document.getElementById("playerBadge");
+    badge.textContent = `YOU ARE ${mySymbol}`;
+    badge.className = `player-badge badge-${mySymbol.toLowerCase()}`;
+
+    listenToGame();
+  };
+
+  function listenToGame() {
+    unsubscribe = onValue(gameRef, (snap) => {
+      const data = snap.val();
+      if (!data) return;
+      renderBoard(data.board, data.winner);
+      updateStatus(data);
+    });
+  }
+
+  function updateStatus(data) {
+    const el = document.getElementById("statusBar");
+    el.className = "status-bar";
+
+    if (!data.players?.O) {
+      el.className += " waiting";
+      el.innerHTML = `Waiting for opponent <span class="waiting-dot"></span><span class="waiting-dot"></span><span class="waiting-dot"></span>`;
+    } else if (data.winner) {
+      el.className += " win";
+      el.textContent = data.winner === "draw"
+        ? "🤝 It's a draw!"
+        : data.winner === mySymbol
+          ? "🎉 You win!"
+          : `${data.winner} wins!`;
+    } else if (data.turn === mySymbol) {
+      el.className += " your-turn";
+      el.textContent = "⚡ Your turn!";
+    } else {
+      el.className += " waiting";
+      el.textContent = `Waiting for ${data.turn}...`;
+    }
+  }
+
+  function renderBoard(board, winner) {
+    const winLine = getWinLine(board);
+    const el = document.getElementById("board");
+    el.innerHTML = "";
+    board.forEach((val, i) => {
+      const cell = document.createElement("div");
+      cell.className = "cell" + (val ? ` taken ${val.toLowerCase()}` : "");
+      if (winLine && winLine.includes(i)) cell.classList.add("winning");
+      cell.textContent = val;
+      if (val) {
+        cell.classList.add("cell-pop");
+      }
+      cell.onclick = () => makeMove(i);
+      el.appendChild(cell);
+    });
+  }
+
+  async function makeMove(index) {
+    const snap = await get(gameRef);
+    const data = snap.val();
+    if (!data || data.turn !== mySymbol || data.board[index] || data.winner || !data.players?.O) return;
+
+    const newBoard = [...data.board];
+    newBoard[index] = mySymbol;
+    const winner = checkWinner(newBoard) || (newBoard.every(c => c) ? "draw" : "");
+
+    await set(gameRef, {
+      ...data,
+      board: newBoard,
+      turn: mySymbol === "X" ? "O" : "X",
+      winner
+    });
+  }
+
+  window.resetGame = async function () {
+    if (!gameRef) return;
+    const snap = await get(gameRef);
+    const data = snap.val();
+    await set(gameRef, {
+      board: Array(9).fill(""),
+      turn: "X",
+      players: data?.players || { X: true, O: false },
+      winner: ""
+    });
+  };
+
+  window.leaveRoom = function () {
+    if (unsubscribe) unsubscribe();
+    document.getElementById("game-area").style.display = "none";
+    document.getElementById("room-area").style.display = "block";
+    document.getElementById("roomInput").value = "";
+    roomId = null; mySymbol = null; gameRef = null;
+  };
+
+  function checkWinner(b) {
+    const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+    for (const line of lines) {
+      const [a, x, c] = line;
+      if (b[a] && b[a] === b[x] && b[a] === b[c]) return b[a];
+    }
+    return null;
+  }
+
+  function getWinLine(b) {
+    const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+    for (const line of lines) {
+      const [a, x, c] = line;
+      if (b[a] && b[a] === b[x] && b[a] === b[c]) return line;
+    }
+    return null;
+  }
+</script>
+</body>
+</html>
