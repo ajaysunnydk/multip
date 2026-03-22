@@ -123,35 +123,40 @@
         </div>
         <span class="round-pill" id="game-round">Round 1</span>
       </div>
-      <div class="gh-center">
-        <div class="board-display">
-          <span class="board-label">BOARD</span>
-          <span class="board-amount" id="game-board-value">0</span>
-        </div>
-      </div>
       <div class="gh-right">
         <button id="btn-end-game" class="btn btn-danger btn-sm" style="display:none">End Game</button>
       </div>
     </div>
 
-    <!-- Game Body -->
+    <!-- Game Body - Round Table -->
     <div class="game-body">
-      <!-- Other Players -->
+      <!-- Other Players (around the table top) -->
       <div class="other-players-strip" id="other-players"></div>
 
-      <!-- Table Center -->
-      <div class="table-center">
-        <div class="deck-stack" id="deck-stack">
-          <div class="card card-back deck-card">
-            <div class="card-back-pattern">🂠</div>
+      <!-- Round Table -->
+      <div class="round-table">
+        <div class="table-felt">
+          <!-- Board Value - Center of table -->
+          <div class="table-board">
+            <span class="board-label">BOARD</span>
+            <span class="board-amount" id="game-board-value">0</span>
           </div>
-          <span class="deck-label"><span id="deck-count">104</span> cards</span>
-        </div>
 
-        <div class="arrow-indicator" id="draw-arrow" style="display:none">→</div>
+          <!-- Deck & Drawn card -->
+          <div class="table-cards-area">
+            <div class="deck-stack" id="deck-stack">
+              <div class="card card-back deck-card">
+                <div class="card-back-pattern">🂠</div>
+              </div>
+              <span class="deck-label"><span id="deck-count">104</span> cards</span>
+            </div>
 
-        <div class="drawn-card-slot" id="drawn-card-slot">
-          <span class="slot-label">Drawn Card</span>
+            <div class="arrow-indicator" id="draw-arrow" style="display:none">→</div>
+
+            <div class="drawn-card-slot" id="drawn-card-slot">
+              <span class="slot-label">Drawn Card</span>
+            </div>
+          </div>
         </div>
       </div>
 

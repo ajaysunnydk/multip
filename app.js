@@ -31,6 +31,8 @@ const S = {
   listeners: [],
   timerInterval: null,
   bidding: false,
+  actionLock: false,
+  processing: false,
 };
 
 // =============================================
@@ -40,11 +42,30 @@ const $ = id => document.getElementById(id);
 const $$ = sel => document.querySelectorAll(sel);
 
 function genId() { return Math.random().toString(36).substr(2, 9) + Date.now().toString(36); }
+
+// Simple English words for room codes
+const ROOM_WORDS = [
+  'BREEZE','CASTLE','DRAGON','FALCON','GARDEN','HAMMER','JUNGLE','KNIGHT',
+  'LEMON','MANGO','ORANGE','PALACE','QUARTZ','ROCKET','SUNSET','TEMPLE',
+  'VELVET','WALRUS','ZENITH','BLAZE','COPPER','DAGGER','EAGLE','FOREST',
+  'GOLDEN','HARBOR','ISLAND','JEWEL','KOALA','LIGHT','MARBLE','NORTH',
+  'OCEAN','PEPPER','RABBIT','SILVER','TIGER','ULTRA','VIOLET','WINTER',
+  'ANCHOR','BADGE','CANDLE','DELTA','EMBER','FLAME','GLOBE','HONEY',
+  'IVORY','JAZZ','KARMA','LUNAR','MEDAL','NOBLE','OPERA','PEARL',
+  'QUEST','RAVEN','STORM','TOWER','UNITY','VAPOR','WHEAT','YOUTH',
+];
 function genRoomCode() {
-  const c = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let code = '';
-  for (let i = 0; i < 6; i++) code += c[Math.floor(Math.random() * c.length)];
-  return code;
+  return ROOM_WORDS[Math.floor(Math.random() * ROOM_WORDS.length)];
+}
+
+// Button disable helpers to prevent double clicks
+function disableBtn(id) {
+  const btn = typeof id === 'string' ? $(id) : id;
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.5'; btn.style.pointerEvents = 'none'; }
+}
+function enableBtn(id) {
+  const btn = typeof id === 'string' ? $(id) : id;
+  if (btn) { btn.disabled = false; btn.style.opacity = ''; btn.style.pointerEvents = ''; }
 }
 
 function showToast(msg, type = '') {
@@ -154,6 +175,7 @@ async function createRoom() {
   if (!name) return showToast('Enter your display name!', 'error');
   if (name.length < 2) return showToast('Name must be at least 2 characters', 'error');
 
+  disableBtn('btn-create-room');
   S.myName = name;
   S.myId = genId();
   S.roomCode = genRoomCode();
@@ -178,6 +200,7 @@ async function createRoom() {
   } catch (e) {
     showToast('Failed to create room: ' + e.message, 'error');
   }
+  enableBtn('btn-create-room');
 }
 
 async function joinRoom() {
@@ -185,21 +208,22 @@ async function joinRoom() {
   const code = $('room-code-input').value.trim().toUpperCase();
   if (!name) return showToast('Enter your display name!', 'error');
   if (name.length < 2) return showToast('Name must be at least 2 characters', 'error');
-  if (!code || code.length < 4) return showToast('Enter a valid room code!', 'error');
+  if (!code || code.length < 3) return showToast('Enter a valid room code!', 'error');
 
+  disableBtn('btn-join-room');
   S.myName = name;
   S.roomCode = code;
 
   try {
     const snap = await roomRef().once('value');
-    if (!snap.exists()) return showToast('Room not found!', 'error');
+    if (!snap.exists()) { enableBtn('btn-join-room'); return showToast('Room not found!', 'error'); }
     const room = snap.val();
-    if (room.status !== 'waiting') return showToast('Game already in progress!', 'error');
+    if (room.status !== 'waiting') { enableBtn('btn-join-room'); return showToast('Game already in progress!', 'error'); }
 
     const players = room.players || {};
     const names = Object.values(players).map(p => p.name.toLowerCase());
-    if (names.includes(name.toLowerCase())) return showToast('Name already taken!', 'error');
-    if (Object.keys(players).length >= 10) return showToast('Room is full! (10 max)', 'error');
+    if (names.includes(name.toLowerCase())) { enableBtn('btn-join-room'); return showToast('Name already taken!', 'error'); }
+    if (Object.keys(players).length >= 10) { enableBtn('btn-join-room'); return showToast('Room is full! (10 max)', 'error'); }
 
     S.myId = genId();
     S.isCreator = false;
@@ -217,6 +241,7 @@ async function joinRoom() {
   } catch (e) {
     showToast('Failed to join: ' + e.message, 'error');
   }
+  enableBtn('btn-join-room');
 }
 
 async function leaveRoom() {
@@ -394,6 +419,10 @@ function renderGame(game) {
 
   if (game.phase === 'player_turn') {
     if (isMyTurn) {
+      // Reset action lock on new turn
+      S.actionLock = false;
+      enableBtn('btn-drop');
+      enableBtn('btn-bid');
       $('action-panel').style.display = '';
       $('waiting-panel').style.display = 'none';
       $('turn-badge').textContent = 'Your Turn!';
@@ -582,27 +611,39 @@ function onTimerExpired() {
 // PLAYER ACTIONS
 // =============================================
 function submitAction(type, amount = 0) {
+  if (S.actionLock) return;
+  S.actionLock = true;
   S.bidding = false;
   $('bid-options').style.display = 'none';
+  disableBtn('btn-drop');
+  disableBtn('btn-bid');
   roomRef('game/pendingAction').set({ type, amount, by: S.myId });
+  // Re-enable after 2s as safety net
+  setTimeout(() => { S.actionLock = false; enableBtn('btn-drop'); enableBtn('btn-bid'); }, 2000);
 }
 
 // =============================================
 // PROCESS ACTIONS (Creator only)
 // =============================================
 async function processAction(action) {
-  const game = S.gameState;
-  if (!game) return;
-  const currentPid = getPlayerIdByOrder(S.players, game.currentPlayerOrder);
-  if (action.by !== currentPid) return; // Ignore stale actions
+  if (S.processing) return;
+  S.processing = true;
+  try {
+    const game = S.gameState;
+    if (!game) return;
+    const currentPid = getPlayerIdByOrder(S.players, game.currentPlayerOrder);
+    if (action.by !== currentPid) return; // Ignore stale actions
 
-  // Clear the pending action first
-  await roomRef('game/pendingAction').remove();
+    // Clear the pending action first
+    await roomRef('game/pendingAction').remove();
 
-  if (action.type === 'drop') {
-    await handleDrop(currentPid);
-  } else if (action.type === 'bid') {
-    await handleBid(currentPid, action.amount);
+    if (action.type === 'drop') {
+      await handleDrop(currentPid);
+    } else if (action.type === 'bid') {
+      await handleBid(currentPid, action.amount);
+    }
+  } finally {
+    S.processing = false;
   }
 }
 

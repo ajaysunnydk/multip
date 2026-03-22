@@ -279,59 +279,117 @@ label { display: block; font-size: 0.85rem; font-weight: 500; color: var(--text-
 .room-code-game { display: flex; align-items: center; gap: 4px; }
 .btn-copy-sm { font-size: 0.85rem; padding: 2px 4px; }
 
-.board-display { text-align: center; }
-.board-label { display: block; font-size: 0.65rem; color: var(--text-muted); letter-spacing: 2px; text-transform: uppercase; }
-.board-amount {
-  font-size: 2rem; font-weight: 900; color: var(--gold);
-  text-shadow: 0 0 20px var(--gold-glow);
-  font-variant-numeric: tabular-nums;
-}
 .gh-right { display: flex; gap: 8px; }
 
 /* Game Body */
-.game-body { flex: 1; display: flex; flex-direction: column; overflow-y: auto; padding: 12px; gap: 12px; }
+.game-body {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  overflow-y: auto; padding: 12px; gap: 16px;
+}
 
 /* Other Players Strip */
 .other-players-strip {
   display: flex; gap: 12px; overflow-x: auto; padding: 8px 4px;
+  justify-content: center; width: 100%;
   scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.1) transparent;
 }
 .op-card {
-  flex-shrink: 0; min-width: 140px; background: var(--bg-panel);
+  flex-shrink: 0; min-width: 130px; background: var(--bg-panel);
   border: 1px solid rgba(255,255,255,0.06); border-radius: var(--radius);
   padding: 10px; text-align: center; transition: var(--transition);
+  animation: fadeSlideIn 0.5s ease both;
 }
-.op-card.active-turn { border-color: var(--gold); box-shadow: 0 0 16px var(--gold-glow); }
+.op-card.active-turn {
+  border-color: var(--gold); box-shadow: 0 0 20px var(--gold-glow);
+  animation: activeGlow 2s ease-in-out infinite;
+}
+@keyframes activeGlow {
+  0%,100% { box-shadow: 0 0 16px var(--gold-glow); }
+  50% { box-shadow: 0 0 30px var(--gold-glow), 0 0 60px rgba(255,215,0,0.1); }
+}
 .op-card .op-name { font-weight: 600; font-size: 0.85rem; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .op-card .op-balance { font-size: 0.78rem; color: var(--text-dim); margin-bottom: 8px; }
 .op-card .op-balance.negative { color: var(--red); }
 .op-card .op-balance.positive { color: var(--emerald); }
 .op-cards-row { display: flex; gap: 4px; justify-content: center; }
 
-/* Table Center */
-.table-center {
-  display: flex; align-items: center; justify-content: center; gap: 24px;
-  padding: 20px 0;
+/* Round Table */
+.round-table {
+  display: flex; align-items: center; justify-content: center;
+  width: 100%; max-width: 420px; aspect-ratio: 1;
+  position: relative;
+}
+.table-felt {
+  width: 100%; height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, #1a5c2e 0%, #0f3d1e 45%, #0a2a14 70%, #061a0c 100%);
+  border: 6px solid #2a1a0a;
+  box-shadow:
+    inset 0 0 60px rgba(0,0,0,0.4),
+    0 0 0 3px #4a3520,
+    0 0 0 8px #2a1a0a,
+    0 8px 40px rgba(0,0,0,0.5);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 12px;
+  padding: 30px;
+  position: relative;
+  overflow: hidden;
+}
+.table-felt::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  border-radius: 50%;
+  background: repeating-conic-gradient(
+    rgba(255,255,255,0.01) 0deg, transparent 1deg, transparent 10deg
+  );
+  pointer-events: none;
+}
+
+/* Board Value on Table */
+.table-board {
+  text-align: center; z-index: 1;
+  animation: boardPulse 3s ease-in-out infinite;
+}
+.table-board .board-label {
+  display: block; font-size: 0.7rem; color: rgba(255,215,0,0.6);
+  letter-spacing: 3px; text-transform: uppercase; margin-bottom: 2px;
+}
+.table-board .board-amount {
+  font-size: 2.8rem; font-weight: 900; color: var(--gold);
+  text-shadow: 0 0 30px var(--gold-glow), 0 0 60px rgba(255,215,0,0.15);
+  font-variant-numeric: tabular-nums;
+}
+@keyframes boardPulse {
+  0%,100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+
+/* Table Cards Area */
+.table-cards-area {
+  display: flex; align-items: center; justify-content: center;
+  gap: 20px; z-index: 1;
 }
 .deck-stack { text-align: center; }
 .deck-card {
-  width: 80px; height: 112px;
+  width: 70px; height: 98px;
   box-shadow: 2px 2px 0 rgba(0,0,0,0.3), 4px 4px 0 rgba(0,0,0,0.2), 6px 6px 0 rgba(0,0,0,0.1);
 }
-.deck-label { display: block; font-size: 0.75rem; color: var(--text-muted); margin-top: 6px; }
+.deck-label { display: block; font-size: 0.7rem; color: rgba(255,255,255,0.3); margin-top: 4px; }
 
 .arrow-indicator {
-  font-size: 2rem; color: var(--gold); animation: arrowPulse 1s ease infinite;
+  font-size: 1.8rem; color: var(--gold); animation: arrowPulse 1s ease infinite;
 }
 @keyframes arrowPulse { 0%,100% { opacity:0.4; transform:translateX(0); } 50% { opacity:1; transform:translateX(6px); } }
 
 .drawn-card-slot {
-  width: 80px; height: 112px; border: 2px dashed rgba(255,255,255,0.1);
+  width: 70px; height: 98px; border: 2px dashed rgba(255,255,255,0.15);
   border-radius: var(--radius); display: flex; align-items: center; justify-content: center;
   position: relative;
 }
 .slot-label {
-  position: absolute; bottom: -20px; font-size: 0.7rem; color: var(--text-muted);
+  position: absolute; bottom: -18px; font-size: 0.65rem; color: rgba(255,255,255,0.3);
   white-space: nowrap;
 }
 
@@ -344,6 +402,11 @@ label { display: block; font-size: 0.85rem; font-weight: 500; color: var(--text-
 .card-front {
   background: var(--card-white); color: var(--card-black);
   box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+  animation: cardDeal 0.4s ease both;
+}
+@keyframes cardDeal {
+  from { transform: scale(0.3) rotateY(180deg); opacity: 0; }
+  to { transform: scale(1) rotateY(0deg); opacity: 1; }
 }
 .card-front.red { color: var(--card-red); }
 .card-front.black { color: var(--card-black); }
@@ -385,11 +448,18 @@ label { display: block; font-size: 0.85rem; font-weight: 500; color: var(--text-
   width: 90px; height: 126px;
   transition: transform 0.3s ease;
 }
-.your-cards-row .card:hover { transform: translateY(-6px); }
+.your-cards-row .card:hover { transform: translateY(-8px) scale(1.05); }
 .your-cards-row .card-front .card-tl { font-size: 0.9rem; top: 6px; left: 7px; }
 .your-cards-row .card-front .card-br { font-size: 0.9rem; bottom: 6px; right: 7px; }
 .your-cards-row .card-front .card-rank { font-size: 1.1rem; }
 .your-cards-row .card-front .card-center-suit { font-size: 2.4rem; }
+
+/* General Animations */
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
 /* Action Panel */
 .action-panel {
@@ -548,14 +618,16 @@ label { display: block; font-size: 0.85rem; font-weight: 500; color: var(--text-
   .landing-container { padding: 0 4px; }
   .panel { padding: 18px; }
   .rc-value { font-size: 1.4rem; }
-  .board-amount { font-size: 1.6rem; }
+  .round-table { max-width: 300px; }
+  .table-felt { padding: 20px; gap: 8px; }
+  .table-board .board-amount { font-size: 2rem; }
+  .table-cards-area { gap: 12px; }
+  .deck-card { width: 55px; height: 77px; }
+  .drawn-card-slot { width: 55px; height: 77px; }
   .your-cards-row .card { width: 76px; height: 106px; }
   .your-cards-row .card-front .card-center-suit { font-size: 2rem; }
   .action-buttons { flex-direction: column; }
   .btn-action { font-size: 1rem; }
-  .table-center { gap: 16px; }
-  .deck-card { width: 68px; height: 95px; }
-  .drawn-card-slot { width: 68px; height: 95px; }
   .bid-options { gap: 6px; }
   .btn-bid-opt { padding: 8px 14px; font-size: 0.8rem; }
 }
