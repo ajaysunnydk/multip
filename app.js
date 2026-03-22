@@ -655,7 +655,7 @@ async function handleBid(playerId, amount) {
 }
 
 async function advanceAfterResult() {
-  $('result-overlay').style.display = 'none';
+  dismissResult();
   const game = (await roomRef('game').once('value')).val();
   if (!game) return;
 
@@ -692,7 +692,10 @@ async function startNewRound(game) {
   const pSnap = await roomRef('players').once('value');
   const players = pSnap.val();
   const sorted = getSortedPlayers(players);
-  const boardValue = S.baseValue * sorted.length;
+
+  // Only collect antes if the board is empty (0 or less)
+  const needsAnte = game.boardValue <= 0;
+  const boardValue = needsAnte ? S.baseValue * sorted.length : game.boardValue;
 
   let deckSnap = await roomRef('deck').once('value');
   let deck = deckSnap.val();
@@ -710,7 +713,10 @@ async function startNewRound(game) {
   const hands = {};
 
   sorted.forEach(p => {
-    updates[`players/${p.id}/balance`] = (players[p.id].balance || 0) - S.baseValue;
+    // Only deduct ante if the board was empty
+    if (needsAnte) {
+      updates[`players/${p.id}/balance`] = (players[p.id].balance || 0) - S.baseValue;
+    }
     hands[p.id] = {
       card1: deck[deckIndex++],
       card2: deck[deckIndex++],
@@ -764,6 +770,17 @@ function showResult(result) {
 
   $('result-card-slot').innerHTML = renderCardHTML(result.card);
   overlay.style.display = 'flex';
+
+  // Click anywhere on the overlay to dismiss
+  overlay.onclick = (e) => {
+    overlay.style.display = 'none';
+    overlay.onclick = null;
+  };
+}
+
+function dismissResult() {
+  $('result-overlay').style.display = 'none';
+  $('result-overlay').onclick = null;
 }
 
 // =============================================
@@ -820,6 +837,26 @@ function setupEvents() {
 
   $('btn-copy-code').addEventListener('click', () => {
     navigator.clipboard.writeText(S.roomCode).then(() => showToast('Code copied!', 'success'));
+  });
+
+  // Copy room code from game screen header
+  $('btn-copy-game-code').addEventListener('click', () => {
+    navigator.clipboard.writeText(S.roomCode).then(() => showToast('Room code copied!', 'success'));
+  });
+
+  // Firebase cleanup
+  $('btn-cleanup').addEventListener('click', async () => {
+    const key = prompt('Enter keyphrase to reset all Firebase data:');
+    if (key !== '123456') {
+      if (key !== null) showToast('Incorrect keyphrase!', 'error');
+      return;
+    }
+    try {
+      await db.ref('rooms').remove();
+      showToast('All Firebase data cleared!', 'success');
+    } catch (e) {
+      showToast('Failed to clear data: ' + e.message, 'error');
+    }
   });
 
   // Game actions

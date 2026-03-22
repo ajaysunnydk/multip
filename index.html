@@ -73,6 +73,11 @@
           </div>
         </div>
       </div>
+
+      <!-- Cleanup Button -->
+      <div class="cleanup-section">
+        <button id="btn-cleanup" class="btn-cleanup">🗑️ Reset Firebase Data</button>
+      </div>
     </div>
   </div>
 
@@ -112,7 +117,10 @@
     <!-- Game Header -->
     <div class="game-header">
       <div class="gh-left">
-        <span class="room-pill" id="game-room-code">ROOM</span>
+        <div class="room-code-game">
+          <span class="room-pill" id="game-room-code">ROOM</span>
+          <button id="btn-copy-game-code" class="btn-icon btn-copy-sm" title="Copy room code">📋</button>
+        </div>
         <span class="round-pill" id="game-round">Round 1</span>
       </div>
       <div class="gh-center">
@@ -212,9 +220,11 @@
     <!-- Result Overlay -->
     <div class="result-overlay" id="result-overlay" style="display:none">
       <div class="result-box" id="result-box">
+        <button class="result-close" id="result-close-btn">&times;</button>
         <h2 id="result-title">WIN</h2>
         <p id="result-message">Details here</p>
         <div id="result-card-slot"></div>
+        <p class="result-hint">Tap anywhere to dismiss</p>
       </div>
     </div>
 

@@ -266,6 +266,19 @@ label { display: block; font-size: 0.85rem; font-weight: 500; color: var(--text-
 .room-pill { background: rgba(255,215,0,0.15); color: var(--gold); }
 .round-pill { background: rgba(0,230,118,0.12); color: var(--emerald); }
 
+/* Cleanup Section */
+.cleanup-section { text-align: center; margin-top: 24px; }
+.btn-cleanup {
+  background: none; border: 1px solid rgba(255,68,68,0.2); border-radius: var(--radius-sm);
+  color: var(--text-muted); font-family: var(--font); font-size: 0.78rem;
+  padding: 8px 18px; cursor: pointer; transition: var(--transition);
+}
+.btn-cleanup:hover { border-color: var(--red); color: var(--red); background: rgba(255,68,68,0.06); }
+
+/* Room Code in Game Header */
+.room-code-game { display: flex; align-items: center; gap: 4px; }
+.btn-copy-sm { font-size: 0.85rem; padding: 2px 4px; }
+
 .board-display { text-align: center; }
 .board-label { display: block; font-size: 0.65rem; color: var(--text-muted); letter-spacing: 2px; text-transform: uppercase; }
 .board-amount {
@@ -469,6 +482,14 @@ label { display: block; font-size: 0.85rem; font-weight: 500; color: var(--text-
 .result-box.win h2 { color: var(--emerald); }
 .result-box.lose h2 { color: var(--red); }
 .result-box p { color: var(--text-dim); margin-bottom: 16px; font-size: 1rem; }
+.result-box { position: relative; }
+.result-close {
+  position: absolute; top: 10px; right: 14px; background: none; border: none;
+  color: var(--text-muted); font-size: 1.6rem; cursor: pointer; line-height: 1;
+  padding: 4px 8px; border-radius: 50%; transition: var(--transition);
+}
+.result-close:hover { color: var(--text); background: rgba(255,255,255,0.1); }
+.result-hint { font-size: 0.75rem; color: var(--text-muted); margin-top: 8px; margin-bottom: 0; opacity: 0.7; }
 #result-card-slot { display: flex; justify-content: center; }
 #result-card-slot .card { width: 80px; height: 112px; }
 #result-card-slot .card .card-center-suit { font-size: 2rem; }
