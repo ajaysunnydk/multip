@@ -1,631 +1,245 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>ChatRoom</title>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --bg: #0e0e12;
-      --surface: #16161d;
-      --surface2: #1e1e28;
-      --border: #2a2a38;
-      --text: #e8e8f0;
-      --muted: #6b6b80;
-      --accent: #7c6aff;
-      --accent-glow: rgba(124,106,255,0.2);
-      --green: #3dd68c;
-      --red: #ff6b6b;
-    }
-
-    html, body { height: 100%; }
-
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'DM Sans', sans-serif;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      padding: 16px;
-    }
-
-    /* Join Screen */
-    #joinScreen {
-      width: 100%;
-      max-width: 380px;
-      animation: fadeUp 0.4s ease;
-    }
-
-    @keyframes fadeUp {
-      from { opacity:0; transform:translateY(16px); }
-      to   { opacity:1; transform:translateY(0); }
-    }
-
-    .join-logo {
-      text-align: center;
-      margin-bottom: 32px;
-    }
-
-    .join-logo .icon {
-      width: 64px; height: 64px;
-      background: var(--accent);
-      border-radius: 20px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 2rem;
-      margin-bottom: 14px;
-      box-shadow: 0 0 40px var(--accent-glow);
-    }
-
-    .join-logo h1 { font-size: 1.8rem; font-weight: 600; letter-spacing: -0.5px; }
-    .join-logo p { color: var(--muted); font-size: 0.9rem; margin-top: 4px; }
-
-    .field { margin-bottom: 14px; }
-
-    .field label {
-      display: block;
-      font-size: 0.78rem;
-      font-weight: 600;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 6px;
-    }
-
-    .field input {
-      width: 100%;
-      padding: 12px 16px;
-      background: var(--surface);
-      border: 1.5px solid var(--border);
-      border-radius: 12px;
-      color: var(--text);
-      font-family: 'DM Sans', sans-serif;
-      font-size: 0.95rem;
-      outline: none;
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
-    .field input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
-    .field input::placeholder { color: var(--muted); }
-
-    .color-row { display: flex; gap: 8px; flex-wrap: wrap; }
-
-    .color-opt {
-      width: 30px; height: 30px;
-      border-radius: 50%;
-      cursor: pointer;
-      border: 2.5px solid transparent;
-      transition: transform 0.15s, border-color 0.15s;
-    }
-    .color-opt:hover { transform: scale(1.15); }
-    .color-opt.selected { border-color: white; transform: scale(1.15); }
-
-    .join-btn {
-      width: 100%;
-      padding: 13px;
-      background: var(--accent);
-      color: white;
-      border: none;
-      border-radius: 12px;
-      font-family: 'DM Sans', sans-serif;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      margin-top: 6px;
-      transition: opacity 0.2s, transform 0.1s;
-      box-shadow: 0 4px 20px var(--accent-glow);
-    }
-    .join-btn:hover { opacity: 0.88; transform: translateY(-1px); }
-    .join-btn:active { transform: translateY(0); }
-
-    /* Chat Screen */
-    #chatScreen {
-      display: none;
-      width: 100%;
-      max-width: 680px;
-      height: 92vh;
-      max-height: 780px;
-      background: var(--surface);
-      border: 1.5px solid var(--border);
-      border-radius: 20px;
-      overflow: hidden;
-      flex-direction: column;
-      box-shadow: 0 24px 80px rgba(0,0,0,0.5);
-      animation: fadeUp 0.35s ease;
-    }
-
-    .chat-header {
-      padding: 14px 20px;
-      border-bottom: 1.5px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: var(--surface);
-      flex-shrink: 0;
-    }
-
-    .chat-header-left { display: flex; align-items: center; gap: 10px; }
-
-    .room-avatar {
-      width: 38px; height: 38px;
-      background: var(--accent);
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.1rem;
-    }
-
-    .room-name { font-weight: 600; font-size: 0.95rem; }
-
-    .online-count {
-      font-size: 0.78rem;
-      color: var(--green);
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .online-dot {
-      width: 6px; height: 6px;
-      background: var(--green);
-      border-radius: 50%;
-      animation: pulse 2s infinite;
-    }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-
-    .leave-btn {
-      padding: 6px 14px;
-      background: transparent;
-      border: 1.5px solid var(--border);
-      border-radius: 8px;
-      color: var(--muted);
-      font-family: 'DM Sans', sans-serif;
-      font-size: 0.8rem;
-      cursor: pointer;
-      transition: border-color 0.2s, color 0.2s;
-    }
-    .leave-btn:hover { border-color: var(--red); color: var(--red); }
-
-    .members-strip {
-      padding: 8px 20px;
-      border-bottom: 1.5px solid var(--border);
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      overflow-x: auto;
-      flex-shrink: 0;
-      background: var(--bg);
-      scrollbar-width: none;
-    }
-    .members-strip::-webkit-scrollbar { display: none; }
-
-    .member-chip {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      padding: 3px 10px 3px 6px;
-      background: var(--surface2);
-      border-radius: 20px;
-      font-size: 0.78rem;
-      font-weight: 500;
-      white-space: nowrap;
-      flex-shrink: 0;
-    }
-
-    .member-chip .av {
-      width: 18px; height: 18px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.65rem;
-      font-weight: 700;
-      color: white;
-    }
-
-    #messages {
-      flex: 1;
-      overflow-y: auto;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      scroll-behavior: smooth;
-    }
-    #messages::-webkit-scrollbar { width: 4px; }
-    #messages::-webkit-scrollbar-track { background: transparent; }
-    #messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-
-    .msg-row {
-      display: flex;
-      align-items: flex-end;
-      gap: 8px;
-      animation: msgIn 0.2s ease;
-    }
-    @keyframes msgIn {
-      from { opacity:0; transform:translateY(6px); }
-      to   { opacity:1; transform:translateY(0); }
-    }
-    .msg-row.me { flex-direction: row-reverse; }
-
-    .msg-av {
-      width: 28px; height: 28px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.7rem;
-      font-weight: 700;
-      color: white;
-      flex-shrink: 0;
-    }
-
-    .msg-wrap { max-width: 70%; display: flex; flex-direction: column; }
-    .msg-row.me .msg-wrap { align-items: flex-end; }
-
-    .msg-sender { font-size: 0.72rem; color: var(--muted); margin-bottom: 3px; padding: 0 4px; }
-
-    .msg-bubble {
-      padding: 9px 14px;
-      border-radius: 16px;
-      font-size: 0.92rem;
-      line-height: 1.5;
-      word-break: break-word;
-    }
-
-    .msg-row.them .msg-bubble {
-      background: var(--surface2);
-      border-bottom-left-radius: 4px;
-    }
-
-    .msg-row.me .msg-bubble {
-      background: var(--accent);
-      border-bottom-right-radius: 4px;
-      color: white;
-    }
-
-    .msg-time { font-size: 0.68rem; color: var(--muted); margin-top: 3px; padding: 0 4px; }
-
-    .msg-system {
-      text-align: center;
-      font-size: 0.75rem;
-      color: var(--muted);
-      padding: 6px 0;
-      font-style: italic;
-    }
-
-    .date-div {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 8px 0;
-      color: var(--muted);
-      font-size: 0.72rem;
-    }
-    .date-div::before, .date-div::after { content:''; flex:1; height:1px; background: var(--border); }
-
-    #typingBar {
-      padding: 2px 20px 4px;
-      font-size: 0.75rem;
-      color: var(--muted);
-      font-style: italic;
-      min-height: 22px;
-      flex-shrink: 0;
-    }
-
-    .input-bar {
-      padding: 12px 16px;
-      border-top: 1.5px solid var(--border);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      background: var(--surface);
-      flex-shrink: 0;
-    }
-
-    #msgInput {
-      flex: 1;
-      padding: 10px 16px;
-      background: var(--bg);
-      border: 1.5px solid var(--border);
-      border-radius: 24px;
-      color: var(--text);
-      font-family: 'DM Sans', sans-serif;
-      font-size: 0.92rem;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-    #msgInput:focus { border-color: var(--accent); }
-    #msgInput::placeholder { color: var(--muted); }
-
-    .send-btn {
-      width: 42px; height: 42px;
-      background: var(--accent);
-      border: none;
-      border-radius: 50%;
-      color: white;
-      font-size: 1.1rem;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: opacity 0.2s, transform 0.1s;
-      flex-shrink: 0;
-    }
-    .send-btn:hover { opacity: 0.85; transform: scale(1.05); }
-    .send-btn:active { transform: scale(0.95); }
-  </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>In-Between | Multiplayer Card Game</title>
+  <meta name="description" content="Real-time multiplayer In-Between card game. Create rooms, invite friends, and bet on card draws!">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<!-- Join -->
-<div id="joinScreen">
-  <div class="join-logo">
-    <div class="icon">💬</div>
-    <h1>ChatRoom</h1>
-    <p>Real-time chat with anyone, anywhere</p>
-  </div>
+  <!-- Toast Container -->
+  <div id="toast-container"></div>
 
-  <div class="field">
-    <label>Your Name</label>
-    <input id="nameInput" type="text" placeholder="e.g. Ajay" maxlength="20"
-      onkeydown="if(event.key==='Enter')joinChat()"/>
-  </div>
+  <!-- ==================== LANDING SCREEN ==================== -->
+  <div id="screen-landing" class="screen active">
+    <div class="landing-container">
+      <div class="logo-section">
+        <div class="logo-suits">♠ ♥ ♦ ♣</div>
+        <h1 class="logo-title">IN-BETWEEN</h1>
+        <p class="logo-subtitle">The Card Game</p>
+        <div class="logo-glow"></div>
+      </div>
 
-  <div class="field">
-    <label>Room ID</label>
-    <input id="roomInput" type="text" placeholder="e.g. friends-hangout" maxlength="30"
-      onkeydown="if(event.key==='Enter')joinChat()"/>
-  </div>
+      <div class="name-section">
+        <label for="player-name">Display Name</label>
+        <input type="text" id="player-name" placeholder="Enter your name..." maxlength="15" autocomplete="off">
+      </div>
 
-  <div class="field">
-    <label>Your Color</label>
-    <div class="color-row" id="colorRow"></div>
-  </div>
+      <div class="landing-panels">
+        <!-- Create Room Panel -->
+        <div class="panel panel-create">
+          <div class="panel-header">
+            <span class="panel-icon">🎰</span>
+            <h3>Create Room</h3>
+          </div>
+          <div class="panel-body">
+            <label>Base Value</label>
+            <div class="base-value-grid">
+              <button class="bv-chip" data-value="10">10</button>
+              <button class="bv-chip active" data-value="20">20</button>
+              <button class="bv-chip" data-value="50">50</button>
+              <button class="bv-chip" data-value="100">100</button>
+            </div>
+            <div class="custom-bv-row">
+              <input type="number" id="custom-base-value" placeholder="Custom..." min="1" max="10000">
+            </div>
+            <button id="btn-create-room" class="btn btn-gold">
+              <span>Create Room</span>
+              <span class="btn-shine"></span>
+            </button>
+          </div>
+        </div>
 
-  <button class="join-btn" onclick="joinChat()">Join Room →</button>
-</div>
+        <div class="divider-or"><span>OR</span></div>
 
-<!-- Chat -->
-<div id="chatScreen">
-  <div class="chat-header">
-    <div class="chat-header-left">
-      <div class="room-avatar">💬</div>
-      <div>
-        <div class="room-name" id="headerRoom"></div>
-        <div class="online-count">
-          <span class="online-dot"></span>
-          <span id="onlineCount">1 online</span>
+        <!-- Join Room Panel -->
+        <div class="panel panel-join">
+          <div class="panel-header">
+            <span class="panel-icon">🚪</span>
+            <h3>Join Room</h3>
+          </div>
+          <div class="panel-body">
+            <label>Room Code</label>
+            <input type="text" id="room-code-input" placeholder="Enter 6-digit code..." maxlength="6" autocomplete="off" style="text-transform:uppercase">
+            <button id="btn-join-room" class="btn btn-emerald">
+              <span>Join Room</span>
+              <span class="btn-shine"></span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
-    <button class="leave-btn" onclick="leaveChat()">Leave</button>
   </div>
 
-  <div class="members-strip" id="membersStrip"></div>
-  <div id="messages"></div>
-  <div id="typingBar"></div>
+  <!-- ==================== LOBBY SCREEN ==================== -->
+  <div id="screen-lobby" class="screen">
+    <div class="lobby-container">
+      <div class="lobby-header">
+        <h2>🃏 Game Lobby</h2>
+        <div class="room-code-box">
+          <span class="rc-label">Room Code</span>
+          <span id="lobby-room-code" class="rc-value">------</span>
+          <button id="btn-copy-code" class="btn-icon" title="Copy code">📋</button>
+        </div>
+        <div class="lobby-meta">
+          <span>Base Value: <strong id="lobby-base-value">20</strong></span>
+          <span>•</span>
+          <span>Players: <strong id="lobby-player-count">0</strong>/10</span>
+        </div>
+      </div>
 
-  <div class="input-bar">
-    <input id="msgInput" type="text" placeholder="Type a message..." maxlength="500"
-      onkeydown="if(event.key==='Enter')sendMessage()"
-      oninput="onTyping()"/>
-    <button class="send-btn" onclick="sendMessage()">➤</button>
+      <div class="lobby-players" id="lobby-players">
+        <!-- Dynamic player list -->
+      </div>
+
+      <div class="lobby-actions">
+        <button id="btn-start-game" class="btn btn-gold" style="display:none">
+          <span>🎲 Start Game</span>
+          <span class="btn-shine"></span>
+        </button>
+        <button id="btn-leave-room" class="btn btn-danger">Leave Room</button>
+      </div>
+    </div>
   </div>
-</div>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, push, onValue, set, remove, off }
-  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  <!-- ==================== GAME SCREEN ==================== -->
+  <div id="screen-game" class="screen">
+    <!-- Game Header -->
+    <div class="game-header">
+      <div class="gh-left">
+        <span class="room-pill" id="game-room-code">ROOM</span>
+        <span class="round-pill" id="game-round">Round 1</span>
+      </div>
+      <div class="gh-center">
+        <div class="board-display">
+          <span class="board-label">BOARD</span>
+          <span class="board-amount" id="game-board-value">0</span>
+        </div>
+      </div>
+      <div class="gh-right">
+        <button id="btn-end-game" class="btn btn-danger btn-sm" style="display:none">End Game</button>
+      </div>
+    </div>
 
-const firebaseConfig = {
-  apiKey: "AIzaSyCDQf-i8UH5wXc9Erz-clkrRi-byRbrwNE",
-  authDomain: "multip-35e38.firebaseapp.com",
-  databaseURL: "https://multip-35e38-default-rtdb.firebaseio.com",
-  projectId: "multip-35e38",
-  storageBucket: "multip-35e38.firebasestorage.app",
-  messagingSenderId: "641663267611",
-  appId: "1:641663267611:web:8c20f6b7a47657226e19be"
-};
+    <!-- Game Body -->
+    <div class="game-body">
+      <!-- Other Players -->
+      <div class="other-players-strip" id="other-players"></div>
 
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
+      <!-- Table Center -->
+      <div class="table-center">
+        <div class="deck-stack" id="deck-stack">
+          <div class="card card-back deck-card">
+            <div class="card-back-pattern">🂠</div>
+          </div>
+          <span class="deck-label"><span id="deck-count">104</span> cards</span>
+        </div>
 
-const COLORS = ["#7c6aff","#ff6b6b","#3dd68c","#ff9f43","#54a0ff","#fd79a8","#e17055","#00cec9","#a29bfe","#55efc4"];
-let selectedColor = COLORS[0];
-let myName, myColor, roomId, userId, presenceRef, typingRef, typingTimeout;
+        <div class="arrow-indicator" id="draw-arrow" style="display:none">→</div>
 
-// Build color picker
-const colorRow = document.getElementById("colorRow");
-COLORS.forEach((c, i) => {
-  const btn = document.createElement("div");
-  btn.className = "color-opt" + (i === 0 ? " selected" : "");
-  btn.style.background = c;
-  btn.onclick = () => {
-    document.querySelectorAll(".color-opt").forEach(b => b.classList.remove("selected"));
-    btn.classList.add("selected");
-    selectedColor = c;
-  };
-  colorRow.appendChild(btn);
-});
+        <div class="drawn-card-slot" id="drawn-card-slot">
+          <span class="slot-label">Drawn Card</span>
+        </div>
+      </div>
 
-window.joinChat = function() {
-  myName = document.getElementById("nameInput").value.trim();
-  roomId = document.getElementById("roomInput").value.trim().replace(/\s+/g,"-").toLowerCase();
-  myColor = selectedColor;
-  if (!myName) return alert("Enter your name!");
-  if (!roomId) return alert("Enter a room ID!");
+      <!-- Your Cards -->
+      <div class="your-cards-section" id="your-cards-section">
+        <h3 class="section-label">Your Cards</h3>
+        <div class="your-cards-row">
+          <div class="your-card-wrapper">
+            <span class="card-label">Face Down</span>
+            <div id="my-card-1" class="card card-back">
+              <div class="card-back-pattern">🂠</div>
+            </div>
+          </div>
+          <div class="your-card-wrapper">
+            <span class="card-label">Face Up</span>
+            <div id="my-card-2" class="card card-back">
+              <div class="card-back-pattern">🂠</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-  userId = Math.random().toString(36).slice(2,9);
+    <!-- Action Panel -->
+    <div class="action-panel" id="action-panel" style="display:none">
+      <div class="action-top">
+        <div class="turn-badge" id="turn-badge">Your Turn!</div>
+        <div class="timer-ring" id="timer-ring">
+          <svg viewBox="0 0 120 120">
+            <circle class="timer-track" cx="60" cy="60" r="52"/>
+            <circle class="timer-fill" cx="60" cy="60" r="52" id="timer-circle"/>
+          </svg>
+          <span class="timer-num" id="timer-text">20</span>
+        </div>
+      </div>
+      <div class="action-buttons" id="action-main">
+        <button id="btn-drop" class="btn btn-danger btn-action">✋ DROP</button>
+        <button id="btn-bid" class="btn btn-gold btn-action">💰 PLACE BID</button>
+      </div>
+      <div class="bid-options" id="bid-options" style="display:none">
+        <button class="btn btn-bid-opt" id="btn-full-board">Full Board <span class="opt-val"></span></button>
+        <button class="btn btn-bid-opt" id="btn-half-board">Half Board <span class="opt-val"></span></button>
+        <button class="btn btn-bid-opt" id="btn-base-half">50% Base <span class="opt-val"></span></button>
+        <div class="custom-bid-row">
+          <input type="number" id="custom-bid-input" placeholder="Amount..." min="1">
+          <button class="btn btn-bid-opt" id="btn-custom-bid">GO</button>
+        </div>
+      </div>
+    </div>
 
-  document.getElementById("joinScreen").style.display = "none";
-  const cs = document.getElementById("chatScreen");
-  cs.style.display = "flex";
-  document.getElementById("headerRoom").textContent = "# " + roomId;
+    <!-- Waiting Panel (shown when it's not your turn) -->
+    <div class="waiting-panel" id="waiting-panel" style="display:none">
+      <div class="waiting-text">
+        <span class="waiting-dots">⏳</span>
+        Waiting for <strong id="waiting-player-name">Player</strong>...
+      </div>
+      <div class="timer-ring timer-ring-sm" id="waiting-timer-ring">
+        <svg viewBox="0 0 120 120">
+          <circle class="timer-track" cx="60" cy="60" r="52"/>
+          <circle class="timer-fill" cx="60" cy="60" r="52" id="waiting-timer-circle"/>
+        </svg>
+        <span class="timer-num" id="waiting-timer-text">20</span>
+      </div>
+    </div>
 
-  // Presence
-  presenceRef = ref(db, `chatrooms/${roomId}/members/${userId}`);
-  set(presenceRef, { name: myName, color: myColor });
+    <!-- Result Overlay -->
+    <div class="result-overlay" id="result-overlay" style="display:none">
+      <div class="result-box" id="result-box">
+        <h2 id="result-title">WIN</h2>
+        <p id="result-message">Details here</p>
+        <div id="result-card-slot"></div>
+      </div>
+    </div>
 
-  typingRef = ref(db, `chatrooms/${roomId}/typing/${userId}`);
+    <!-- Scoreboard -->
+    <div class="scoreboard" id="scoreboard"></div>
+  </div>
 
-  // System join message
-  push(ref(db, `chatrooms/${roomId}/messages`), { type:"system", text:`${myName} joined`, ts: Date.now() });
+  <!-- ==================== GAME OVER SCREEN ==================== -->
+  <div id="screen-gameover" class="screen">
+    <div class="gameover-container">
+      <div class="gameover-header">
+        <div class="logo-suits small">♠ ♥ ♦ ♣</div>
+        <h2>Game Over</h2>
+      </div>
+      <div class="final-standings" id="final-standings"></div>
+      <button id="btn-back-home" class="btn btn-gold">
+        <span>Back to Home</span>
+        <span class="btn-shine"></span>
+      </button>
+    </div>
+  </div>
 
-  listenMembers();
-  listenMessages();
-  listenTyping();
-
-  setTimeout(() => document.getElementById("msgInput").focus(), 100);
-};
-
-function listenMembers() {
-  onValue(ref(db, `chatrooms/${roomId}/members`), snap => {
-    const data = snap.val() || {};
-    const list = Object.values(data);
-    document.getElementById("onlineCount").textContent = list.length + " online";
-    const strip = document.getElementById("membersStrip");
-    strip.innerHTML = "";
-    list.forEach(m => {
-      const chip = document.createElement("div");
-      chip.className = "member-chip";
-      const av = document.createElement("div");
-      av.className = "av";
-      av.style.background = m.color;
-      av.textContent = m.name[0].toUpperCase();
-      chip.appendChild(av);
-      chip.appendChild(document.createTextNode(m.name === myName ? m.name + " (you)" : m.name));
-      strip.appendChild(chip);
-    });
-  });
-}
-
-let lastDay = "";
-
-function listenMessages() {
-  onValue(ref(db, `chatrooms/${roomId}/messages`), snap => {
-    if (!snap.exists()) return;
-    const el = document.getElementById("messages");
-    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
-    el.innerHTML = "";
-    lastDay = "";
-    Object.values(snap.val()).forEach(renderMsg);
-    if (atBottom) el.scrollTop = el.scrollHeight;
-  });
-}
-
-function renderMsg(msg) {
-  const el = document.getElementById("messages");
-  const d = new Date(msg.ts);
-  const dayStr = d.toDateString();
-
-  if (dayStr !== lastDay) {
-    lastDay = dayStr;
-    const div = document.createElement("div");
-    div.className = "date-div";
-    const now = new Date();
-    div.textContent = d.toDateString() === now.toDateString()
-      ? "Today"
-      : d.toLocaleDateString(undefined, {weekday:"long", month:"short", day:"numeric"});
-    el.appendChild(div);
-  }
-
-  if (msg.type === "system") {
-    const div = document.createElement("div");
-    div.className = "msg-system";
-    div.textContent = msg.text;
-    el.appendChild(div);
-    return;
-  }
-
-  const isMe = msg.uid === userId;
-  const row = document.createElement("div");
-  row.className = "msg-row " + (isMe ? "me" : "them");
-
-  const av = document.createElement("div");
-  av.className = "msg-av";
-  av.style.background = msg.color || "#7c6aff";
-  av.textContent = (msg.sender||"?")[0].toUpperCase();
-
-  const wrap = document.createElement("div");
-  wrap.className = "msg-wrap";
-
-  if (!isMe) {
-    const sn = document.createElement("div");
-    sn.className = "msg-sender";
-    sn.textContent = msg.sender;
-    sn.style.color = msg.color || "var(--muted)";
-    wrap.appendChild(sn);
-  }
-
-  const bubble = document.createElement("div");
-  bubble.className = "msg-bubble";
-  bubble.textContent = msg.text;
-
-  const time = document.createElement("div");
-  time.className = "msg-time";
-  time.textContent = d.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
-
-  wrap.appendChild(bubble);
-  wrap.appendChild(time);
-
-  if (isMe) { row.appendChild(wrap); row.appendChild(av); }
-  else { row.appendChild(av); row.appendChild(wrap); }
-
-  el.appendChild(row);
-}
-
-window.sendMessage = function() {
-  const input = document.getElementById("msgInput");
-  const text = input.value.trim();
-  if (!text) return;
-  input.value = "";
-  clearTypingState();
-  push(ref(db, `chatrooms/${roomId}/messages`), {
-    type: "msg", text, sender: myName, uid: userId, color: myColor, ts: Date.now()
-  });
-};
-
-window.onTyping = function() {
-  set(typingRef, { name: myName, ts: Date.now() });
-  clearTimeout(typingTimeout);
-  typingTimeout = setTimeout(clearTypingState, 2500);
-};
-
-function clearTypingState() {
-  clearTimeout(typingTimeout);
-  remove(typingRef);
-}
-
-function listenTyping() {
-  onValue(ref(db, `chatrooms/${roomId}/typing`), snap => {
-    const data = snap.val() || {};
-    const others = Object.entries(data).filter(([id]) => id !== userId).map(([,v]) => v.name);
-    const bar = document.getElementById("typingBar");
-    if (!others.length) bar.textContent = "";
-    else if (others.length === 1) bar.textContent = others[0] + " is typing...";
-    else bar.textContent = others.join(", ") + " are typing...";
-  });
-}
-
-window.leaveChat = function() {
-  push(ref(db, `chatrooms/${roomId}/messages`), { type:"system", text:`${myName} left`, ts: Date.now() });
-  clearTypingState();
-  remove(presenceRef);
-  off(ref(db, `chatrooms/${roomId}/messages`));
-  off(ref(db, `chatrooms/${roomId}/members`));
-  off(ref(db, `chatrooms/${roomId}/typing`));
-  document.getElementById("chatScreen").style.display = "none";
-  document.getElementById("joinScreen").style.display = "block";
-  document.getElementById("messages").innerHTML = "";
-};
-</script>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
