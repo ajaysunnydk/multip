@@ -671,6 +671,12 @@ async function advanceToNextPlayer() {
   if (!game) return;
   const nextOrder = getNextOrder(S.players, game.currentPlayerOrder);
 
+  // If we've cycled back to the round starter, all players have had their turn
+  if (nextOrder === game.roundStarter) {
+    await startNewRound(game);
+    return;
+  }
+
   await roomRef('game').update({
     currentPlayerOrder: nextOrder,
     phase: 'player_turn',
