@@ -9,36 +9,106 @@
 </head>
 <body>
 
-<!-- Join -->
-<div id="joinScreen">
-  <div class="join-logo">
-    <div class="icon">💬</div>
-    <h1>ChatRoom</h1>
-    <p>Real-time chat with anyone, anywhere</p>
-  </div>
+<!-- Auth -->
+<div id="authScreen" class="screen">
+  <div class="auth-card">
+    <div class="join-logo">
+      <div class="icon">💬</div>
+      <h1>ChatRoom</h1>
+      <p>Your private chat space</p>
+    </div>
 
-  <div class="field">
-    <label>Your Name</label>
-    <input id="nameInput" type="text" placeholder="e.g. Your Name" maxlength="20"
-      onkeydown="if(event.key==='Enter')joinChat()"/>
-  </div>
+    <div class="field">
+      <label>Your name</label>
+      <input id="authName" type="text" placeholder="e.g. Alice" maxlength="20"
+        autocomplete="username"
+        onkeydown="if(event.key==='Enter')document.getElementById('authPin').focus()"/>
+    </div>
 
-  <div class="field">
-    <label>Room ID</label>
-    <input id="roomInput" type="text" placeholder="e.g. friends-hangout" maxlength="30"
-      onkeydown="if(event.key==='Enter')joinChat()"/>
-  </div>
+    <div class="field">
+      <label>PIN (4–8 digits)</label>
+      <div class="pin-row">
+        <input id="authPin" type="password" inputmode="numeric"
+          placeholder="••••" maxlength="8" autocomplete="current-password"
+          onkeydown="if(event.key==='Enter')handleAuth()"/>
+        <button type="button" class="pin-toggle" id="pinToggle"
+          onclick="togglePinVisibility()" aria-label="Show or hide PIN">👁</button>
+      </div>
+    </div>
 
-  <div class="field">
-    <label>Your Color</label>
-    <div class="color-row" id="colorRow"></div>
-  </div>
+    <div class="field">
+      <label>Your color</label>
+      <div class="color-row" id="colorRow"></div>
+    </div>
 
-  <button class="join-btn" onclick="joinChat()">Join Room →</button>
+    <div id="authError" class="auth-error" style="display:none"></div>
+
+    <button type="button" class="join-btn" onclick="handleAuth()" id="authBtn">
+      Continue →
+    </button>
+
+    <p class="auth-hint">New name = new account. Same name + PIN = login.</p>
+  </div>
+</div>
+
+<!-- Home -->
+<div id="homeScreen" class="screen">
+  <div class="home-container">
+
+    <div class="home-header">
+      <div class="home-user">
+        <div class="home-avatar" id="homeAvatar"></div>
+        <div>
+          <div class="home-name" id="homeName"></div>
+          <div class="home-status">● Online</div>
+        </div>
+      </div>
+      <button type="button" class="icon-btn logout-btn" title="Log out"
+        onclick="logOut()">⎋</button>
+    </div>
+
+    <div class="home-tabs">
+      <button type="button" class="tab-btn active" id="tabRooms"
+        onclick="switchTab('rooms')">Rooms</button>
+      <button type="button" class="tab-btn" id="tabDMs"
+        onclick="switchTab('dms')">Direct Messages</button>
+    </div>
+
+    <div id="tabContentRooms" class="tab-content">
+      <div class="section-label">Join or create a room</div>
+      <div class="room-join-row">
+        <input id="homeRoomInput" type="text"
+          placeholder="Room ID (e.g. friends-hangout)"
+          maxlength="30"
+          onkeydown="if(event.key==='Enter')homeJoinRoom()"/>
+        <button type="button" class="join-btn-sm" onclick="homeJoinRoom()">Join →</button>
+      </div>
+      <div class="section-label" style="margin-top:20px">Recent rooms</div>
+      <div id="recentRoomsList" class="chat-list">
+        <div class="chat-list-empty">No recent rooms yet</div>
+      </div>
+    </div>
+
+    <div id="tabContentDMs" class="tab-content" style="display:none">
+      <div class="section-label">Start a direct message</div>
+      <div class="room-join-row">
+        <input id="dmTargetName" type="text"
+          placeholder="Enter exact username…"
+          maxlength="20"
+          onkeydown="if(event.key==='Enter')startDM()"/>
+        <button type="button" class="join-btn-sm" onclick="startDM()">DM →</button>
+      </div>
+      <div class="section-label" style="margin-top:20px">Your DMs</div>
+      <div id="dmList" class="chat-list">
+        <div class="chat-list-empty">No DMs yet</div>
+      </div>
+    </div>
+
+  </div>
 </div>
 
 <!-- Chat -->
-<div id="chatScreen">
+<div id="chatScreen" class="screen">
   <div class="chat-header">
     <div class="chat-header-left">
       <div class="room-avatar">💬</div>
@@ -57,7 +127,7 @@
     </div>
     <div class="header-actions">
       <button type="button" id="btnSearch" class="icon-btn" title="Search">🔍</button>
-      <button type="button" class="leave-btn" onclick="leaveChat()">Leave</button>
+      <button type="button" class="leave-btn" onclick="leaveChat()">Back</button>
     </div>
   </div>
 
